@@ -1,0 +1,23 @@
+export struct Settings {
+    path_32: string,
+    path_64: string,
+}
+
+export global GlobalState {
+    in-out property <int> running_sc1: 0;
+    in-out property <bool> quit_app: false;
+    in-out property <[string]> logs: [];
+    in-out property <Settings> settings;
+    in-out property <string> path-32;
+    in-out property <string> path-64;
+}
+
+export global GlobalCallbacks {
+    callback run_game(string);
+    callback get_path() -> string;
+    callback browse_32;
+    callback browse_64;
+    callback settings_update;
+    callback save_logs;
+    callback kill_all;
+}

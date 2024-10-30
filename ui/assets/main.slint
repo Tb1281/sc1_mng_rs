@@ -1,0 +1,259 @@
+import { Button, HorizontalBox, ListView } from "std-widgets.slint";
+import { GlobalState ,GlobalCallbacks} from "globals.slint";
+import "fonts/PretendardVariable.ttf";
+
+export * from "globals.slint";
+
+
+component SettingsDialog inherits Dialog {
+    callback accept();
+    callback reject();
+    width: 320px;
+    height: 240px;
+    Rectangle {
+        background: white;
+        border-radius: 4px;
+        drop-shadow-color: #00000040;
+        drop-shadow-offset-x: 0px;
+        drop-shadow-offset-y: 2px;
+        drop-shadow-blur: 8px;
+        TouchArea { }
+
+        VerticalLayout {
+            padding: 10px;
+            alignment: LayoutAlignment.space-between;
+            Text {
+                text: "설정";
+                vertical-alignment: TextVerticalAlignment.center;
+                font-size: 16px;
+                font-weight: 700;
+            }
+
+            VerticalLayout {
+                spacing: 5px;
+                VerticalLayout {
+                    Text {
+                        text: "32bit";
+                        font-size: 12px;
+                        font-weight: 600;
+                    }
+
+                    HorizontalLayout {
+                        alignment: LayoutAlignment.stretch;
+                        spacing: 5px;
+                        VerticalLayout {
+                            alignment: LayoutAlignment.center;
+                            Rectangle {
+                                border-width: 1px;
+                                height: 25px;
+                                border-color: #888;
+                                HorizontalLayout {
+                                    padding: 5px;
+                                    path-32 := Text {
+                                        overflow: TextOverflow.elide;
+                                        text: GlobalState.path-32 != "" ? GlobalState.path-32 : GlobalState.settings.path-32;
+                                        font-size: 10px;
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Button {
+                                clicked => {
+                                    GlobalCallbacks.browse_32();
+                                }
+                            }
+
+                            Image {
+                                width: 16px;
+                                height: 16px;
+                                source: @image-url("images/browse-svgrepo-com.svg");
+                            }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    Text {
+                        text: "64bit";
+                        font-size: 12px;
+                        font-weight: 600;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 5px;
+                        VerticalLayout {
+                            alignment: LayoutAlignment.center;
+                            Rectangle {
+                                border-width: 1px;
+                                height: 25px;
+                                border-color: #888;
+                                HorizontalLayout {
+                                    padding: 5px;
+                                    path-64 := Text {
+                                        overflow: TextOverflow.elide;
+                                        text: GlobalState.path-64 != "" ? GlobalState.path-64 : GlobalState.settings.path-64;
+                                        font-size: 10px;
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Button {
+                                clicked => {
+                                    GlobalCallbacks.browse_64();
+                                }
+                            }
+
+                            Image {
+                                width: 16px;
+                                height: 16px;
+                                source: @image-url("images/browse-svgrepo-com.svg");
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                alignment: end;
+                spacing: 8px;
+                height: 30px;
+                Button {
+                    text: "확인";
+                    primary: true;
+                    clicked => {
+                        GlobalState.settings.path-32 = GlobalState.path-32;
+                        GlobalState.settings.path-64 = GlobalState.path-64;
+                        root.accept();
+                    }
+                }
+
+                Button {
+                    text: "취소";
+                    clicked => {
+                        root.reject();
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component MainWindow inherits Window {
+    title: "SC1 Manager";
+    max-width: 400px;
+    min-width: 400px;
+    max-height: 300px;
+    min-height: 300px;
+    background: #f0f0f0;
+    default-font-family: "Pretendard Variable";
+    property <bool> show-settings: false;
+    function close-settings() {
+        GlobalState.path-32 = "";
+        GlobalState.path-64 = "";
+        show-settings = false;
+    }
+    VerticalLayout {
+        padding: 10px;
+        spacing: 10px;
+
+        // Buttons
+        HorizontalLayout {
+            spacing: 5px;
+            Rectangle {
+                Button {
+                    clicked => {
+                        root.show-settings = true;
+                    }
+                }
+
+                Image {
+                    width: 20px;
+                    height: 20px;
+                    source: @image-url("images/gear-svgrepo-com.svg");
+                }
+            }
+
+            Button {
+                enabled: GlobalState.settings.path-32 != "";
+                text: "32bit";
+                clicked => {
+                    GlobalCallbacks.run_game(GlobalState.settings.path-32);
+                }
+            }
+
+            Button {
+                enabled: GlobalState.settings.path-64 != "";
+                text: "64bit";
+                clicked => {
+                    GlobalCallbacks.run_game(GlobalState.settings.path-64);
+                }
+            }
+
+            Button {
+                enabled: GlobalState.running_sc1 > 0;
+                text: "Kill \{GlobalState.running_sc1 > 0 ? GlobalState.running_sc1 : "All"}";
+                clicked => {
+                    GlobalCallbacks.kill_all();
+                }
+            }
+        }
+
+        // Log area
+        Rectangle {
+            background: white;
+            border-width: 1px;
+            border-color: #888;
+            VerticalLayout {
+                padding: 5px;
+                ListView {
+                    for log in GlobalState.logs: Text {
+                        height: 20px;
+                        text: log;
+                        color: #000;
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+
+        // Buttons
+        HorizontalLayout {
+            Button {
+                text: "Save Logs";
+                clicked => {
+                    GlobalCallbacks.save_logs();
+                }
+            }
+
+            Button {
+                text: "Clear Logs";
+                clicked => {
+                    GlobalState.logs = [];
+                }
+            }
+        }
+    }
+
+    if(show-settings): Rectangle {
+        background: #00000020;
+        TouchArea {
+            clicked => {
+                close-settings();
+            }
+        }
+
+        SettingsDialog {
+            accept => {
+                close-settings();
+                GlobalCallbacks.settings_update();
+            }
+            reject => {
+                close-settings();
+            }
+        }
+    }
+}
